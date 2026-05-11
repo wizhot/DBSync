@@ -1,240 +1,145 @@
-# DbSync - 数据库实时同步工具
+# DbSync - SQLite + Firebird 异构数据库同步工具
 
-DbSync 是一个基于 Firebird 数据库和 LiteSQL 的 Windows 局域网数据库双向实时同步工具。
+## 项目简介
 
-## 功能特性
+DbSync 是一个用于 **SQLite** 和 **Firebird** 异构数据库之间实时双向同步的桌面工具。
+主要场景为将管家婆系统的 SQLite 数据库 (grasp.db) 与 Firebird 数据库 (SALES.FDB) 进行数据同步。
 
-- **双向实时同步**: 支持两台电脑之间的数据库双向同步（主主模式）
-- **嵌入式支持**: 支持 Firebird Embedded，无需安装数据库服务器
-- **自动变更追踪**: 使用数据库触发器自动捕获数据变更
-- **冲突解决**: 支持多种冲突解决策略（时间戳优先、本地优先、远程优先、手动）
-- **网络通信**: 基于 TCP Socket 的可靠数据传输
-- **系统托盘**: 最小化到系统托盘，后台静默运行
-- **开机自启**: 支持 Windows 开机自动启动
-- **自动重连**: 网络断开后自动重连
-- **便携部署**: 嵌入式模式支持 U 盘便携运行
+## 核心特性
 
-## 系统要求
+- **异构数据库同步**: 支持 SQLite (grasp.db) 与 Firebird (SALES.FDB) 之间的双向数据同步
+- **映射驱动同步**: 按映射配置文件 (config/mapping.json) 只同步有映射的表和字段
+- **自动识别数据库类型**: 根据文件扩展名 (.db=SQLite, .fdb=Firebird) 或配置文件中的 db_type 字段自动识别
+- **字段映射与值转换**: 支持字段名映射和值转换规则（如 deleted <-> is_active 的 0/1 反转）
+- **变更追踪**: 基于触发器和日志表实现数据变更的自动检测
+- **冲突解决**: 支持时间戳策略、源优先、目标优先等多种冲突解决策略
+- **网络通信**: 支持多节点间的同步数据推送和通知
+- **系统托盘**: 最小化到系统托盘，后台运行
 
-- Windows 7/8/10/11 (x64)
-- Visual Studio 2019 或更高版本（仅编译时需要）
-- CMake 3.16 或更高版本（仅编译时需要）
+## 工作目录
 
-## 运行模式
+```
+C:\Users\wizhot\Desktop\GWweb\DBSync
+```
 
-### 嵌入式模式（推荐）
-
-无需安装 Firebird 服务器，只需复制 DLL 文件即可运行。
-
-**优点：**
-- 部署简单，复制即用
-- 性能更好（单进程访问）
-- 支持便携部署
-
-**缺点：**
-- 不支持远程数据库连接
-- 单进程独占访问
-
-### 服务器模式
-
-需要安装 Firebird 服务器。
-
-**优点：**
-- 支持多进程并发访问
-- 支持远程数据库连接
-
-**缺点：**
-- 需要安装和配置服务器
-
-## 快速开始（嵌入式模式）
-
-### 1. 准备文件
-
-从 [Firebird 官网](https://firebirdsql.org/en/server-packages/) 下载 Windows ZIP 包，提取以下文件：
+## 项目结构
 
 ```
 DbSync/
-├── DbSync.exe
-├── fbembed.dll           # Firebird 嵌入式引擎
-├── icuuc70.dll           # ICU 库
-├── icuin70.dll           # ICU 库
-├── icudt70.dll           # ICU 数据
-├── libcrypto-1_1-x64.dll # OpenSSL
-├── libssl-1_1-x64.dll    # OpenSSL
-├── litesql.dll           # LiteSQL
-├── jsoncpp.dll           # JsonCpp
+├── CMakeLists.txt              # CMake 构建配置
+├── README.md                   # 项目说明
 ├── config/
-│   └── dbsync.conf
-└── data/
-    └── LOCAL_DB.FDB
+│   ├── dbsync.conf             # 主配置文件（INI 格式）
+│   └── mapping.json            # 表字段映射配置（JSON 格式）
+├── src/
+│   ├── main.cpp                # 程序入口
+│   ├── DbSyncApp.h/cpp         # 应用程序主类
+│   ├── Common.h                # 公共数据结构和常量
+│   ├── ConfigManager.h/cpp     # 配置管理器
+│   ├── SqliteManager.h/cpp     # SQLite 数据库管理器
+│   ├── FirebirdManager.h/cpp   # Firebird 数据库管理器
+│   ├── MappingManager.h/cpp    # 映射管理器
+│   ├── SyncManager.h/cpp       # 同步管理器
+│   ├── ChangeTracker.h/cpp     # 变更追踪器
+│   ├── ConflictResolver.h/cpp  # 冲突解决器
+│   ├── NetworkManager.h/cpp    # 网络管理器
+│   ├── SystemTray.h/cpp        # 系统托盘
+│   └── Logger.h/cpp            # 日志管理器
+├── data/
+│   ├── grasp.db                # 管家婆 SQLite 数据库
+│   └── SALES.FDB               # Firebird 销售数据库
+└── third_party/
+    ├── sqlite3/                # SQLite3 库
+    ├── firebird/               # Firebird 客户端库
+    └── jsoncpp/                # JSON 解析库
 ```
 
-### 2. 配置
+## 构建说明
 
-编辑 `config/dbsync.conf`：
+### 依赖
 
-```ini
-[local_database]
-database = C:/DbSync/data/LOCAL_DB.FDB
-embedded = true
+- C++17 编译器 (MSVC 2019+ / GCC 9+)
+- CMake 3.14+
+- SQLite3 (支持加密扩展)
+- Firebird Client (fbclient)
+- jsoncpp
 
-[remote_database]
-host = 192.168.1.101
-database = C:/DbSync/data/REMOTE_DB.FDB
-embedded = true
-
-[network]
-remote_ip = 192.168.1.101
-```
-
-### 3. 运行
-
-```cmd
-DbSync.exe
-```
-
-详细安装说明请参考：
-- [嵌入式版本安装指南](INSTALL_EMBEDDED.md)
-- [DLL 文件清单](DLL_MANIFEST.md)
-
-## 编译步骤
-
-### 1. 准备环境
+### 构建步骤
 
 ```bash
-# 创建第三方库目录
-mkdir third_party
-cd third_party
-mkdir litesql
-mkdir jsoncpp
-mkdir firebird
+# 配置第三方库路径
+cmake -B build -DSQLITE3_ROOT=C:/path/to/sqlite3 -DFIREBIRD_ROOT=C:/path/to/firebird
+
+# 构建
+cmake --build build --config Release
 ```
 
-### 2. 放置依赖库
+## 配置说明
 
-```
-third_party/
-├── litesql/
-│   ├── include/
-│   │   └── litesql/
-│   │       └── *.h
-│   └── lib/
-│       ├── litesql.lib
-│       └── litesql-util.lib
-├── jsoncpp/
-│   ├── include/
-│   │   └── json/
-│   │       └── *.h
-│   └── lib/
-│       └── jsoncpp.lib
-└── firebird/
-    ├── include/
-    │   └── ibase.h
-    └── lib/
-        └── fbclient_ms.lib
-```
-
-### 3. 编译
-
-```bash
-mkdir build
-cd build
-
-# 嵌入式模式（默认）
-cmake .. -G "Visual Studio 16 2019" -A x64
-
-# 服务器模式
-cmake .. -G "Visual Studio 16 2019" -A x64 -DUSE_FIREBIRD_EMBEDDED=OFF
-
-cmake --build . --config Release
-```
-
-## 配置文件说明
+### 主配置文件 (config/dbsync.conf)
 
 ```ini
 [node]
-id = auto-generated-uuid          # 节点唯一标识
+id = auto-generated-uuid
 
 [local_database]
-database = C:/DbSync/data/LOCAL_DB.FDB  # 本地数据库路径
+database = data/grasp.db
+db_type = sqlite
+encryption_key =
+charset = UTF8
+
+[remote_database]
+host = 192.168.1.100
+database = data/SALES.FDB
+db_type = firebird
 username = SYSDBA
 password = masterkey
 charset = UTF8
-embedded = true                   # 使用嵌入式模式
-
-[remote_database]
-host = 192.168.1.100              # 远程电脑IP
-database = C:/DbSync/data/REMOTE_DB.FDB
 embedded = true
 
-[network]
-local_port = 15555                # 本地监听端口
-remote_ip = 192.168.1.100         # 远程电脑IP
-remote_port = 15555
-
 [sync]
-auto_start = true                 # 启动时自动同步
-minimize_to_tray = true           # 最小化到托盘
-sync_interval_ms = 1000           # 同步间隔
-conflict_resolution_strategy = timestamp  # 冲突解决策略
+auto_start = true
+sync_interval_ms = 1000
+mapping_file = config/mapping.json
 ```
 
-## 冲突解决策略
+### 映射配置文件 (config/mapping.json)
 
-| 策略 | 说明 |
-|------|------|
-| `timestamp` | 时间戳较新的变更优先（默认） |
-| `local` | 本地变更始终优先 |
-| `remote` | 远程变更始终优先 |
-| `manual` | 手动解决 |
+映射文件定义了 SQLite 和 Firebird 之间的表和字段对应关系，只有配置了映射的表和字段才会被同步。
 
-## 文档
-
-- [嵌入式版本安装指南](INSTALL_EMBEDDED.md) - 详细的嵌入式模式部署说明
-- [DLL 文件清单](DLL_MANIFEST.md) - 所需 DLL 文件列表
-- [服务器版本安装指南](INSTALL.md) - 服务器模式部署说明
-
-## 常见问题
-
-### Q: 程序无法启动，提示缺少 DLL？
-A: 确保所有必需的 DLL 文件都在程序目录中。参考 [DLL_MANIFEST.md](DLL_MANIFEST.md)。
-
-### Q: 如何创建数据库？
-A: 使用 DBeaver、FlameRobin 等工具，或使用完整版 Firebird 的 isql 工具。
-
-### Q: 两台电脑如何同步？
-A: 两台电脑都运行 DbSync，通过网络端口通信。确保防火墙开放同步端口（默认 15555）。
-
-### Q: 数据库被锁定怎么办？
-A: 嵌入式模式只允许单进程访问。确保没有其他程序打开数据库文件。
-
-## 技术架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        DbSync Application                    │
-├─────────────────────────────────────────────────────────────┤
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   SyncManager │  │ NetworkManager│  │  MainWindow   │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                 │                 │              │
-│  ┌──────▼───────┐  ┌──────▼───────┐  ┌──────▼───────┐      │
-│  │FirebirdManager│  │ ChangeTracker │  │  SystemTray   │      │
-│  │  (Embedded)   │  │   (LiteSQL)   │  │               │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-                    ┌──────────────────┐
-                    │   TCP Network    │
-                    │   (LAN Sync)     │
-                    └──────────────────┘
+```json
+{
+  "table_mappings": [
+    {
+      "source_table": "Ptype",
+      "target_table": "products",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "primary_key": { "source": "ptypeid", "target": "id" },
+      "field_mappings": [
+        { "source": "ptypeid", "target": "id" },
+        { "source": "pfullname", "target": "name" }
+      ],
+      "value_transforms": [
+        { "source": "deleted", "target": "is_active", "transform": "invert" }
+      ]
+    }
+  ]
+}
 ```
 
-## 许可证
+## 同步流程
 
-MIT License
+1. **初始化**: 加载配置 -> 连接 SQLite 和 Firebird -> 加载映射规则 -> 设置变更追踪
+2. **变更检测**: 通过触发器自动记录数据变更到日志表
+3. **数据同步**: 定时扫描日志表，按映射规则转换数据，写入目标数据库
+4. **冲突处理**: 检测到冲突时按配置的策略自动解决
+5. **标记完成**: 同步成功后标记变更记录为已同步
 
-## 联系方式
+## 数据库类型识别
 
-如有问题或建议，请提交 Issue。
+系统通过以下方式自动识别数据库类型：
+
+1. 配置文件中的 `db_type` 字段（优先级最高）
+2. 数据库文件扩展名：`.db` = SQLite，`.fdb` = Firebird
+3. `db_type` 设为 `"auto"` 时自动根据扩展名判断

@@ -22,7 +22,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     DbSyncApp app;
     
     // 初始化应用程序
-    if (!app.Initialize(hInstance, nCmdShow, lpCmdLine)) {
+    if (!app.Initialize()) {
         CloseHandle(hMutex);
         return 1;
     }

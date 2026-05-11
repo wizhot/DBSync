@@ -1,0 +1,137 @@
+{
+  "table_mappings": [
+    {
+      "source_table": "Ptype",
+      "target_table": "products",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "description": "商品",
+      "primary_key": {
+        "source": "ptypeid",
+        "target": "id"
+      },
+      "field_mappings": [
+        {"source": "ptypeid", "target": "id"},
+        {"source": "pusercode", "target": "code"},
+        {"source": "pfullname", "target": "name"},
+        {"source": "Standard", "target": "spec"},
+        {"source": "Unit", "target": "unit"},
+        {"source": "Barcode", "target": "barcode"},
+        {"source": "Type", "target": "category"},
+        {"source": "pcomment", "target": "remark"},
+        {"source": "retailPrice", "target": "retail_price"},
+        {"source": "salePrice1", "target": "sale_price"}
+      ],
+      "value_transforms": [
+        {"source": "deleted", "target": "is_active", "transform": "invert"}
+      ]
+    },
+    {
+      "source_table": "Btype",
+      "target_table": "customers",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "description": "客户/供应商",
+      "primary_key": {
+        "source": "btypeid",
+        "target": "id"
+      },
+      "field_mappings": [
+        {"source": "btypeid", "target": "id"},
+        {"source": "busercode", "target": "code"},
+        {"source": "bfullname", "target": "name"},
+        {"source": "Address", "target": "address"},
+        {"source": "Tel", "target": "phone"},
+        {"source": "Person", "target": "contact"},
+        {"source": "EMail", "target": "email"},
+        {"source": "bcomment", "target": "remark"}
+      ],
+      "value_transforms": [
+        {"source": "deleted", "target": "is_active", "transform": "invert"}
+      ]
+    },
+    {
+      "source_table": "Stock",
+      "target_table": "warehouses",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "description": "仓库",
+      "primary_key": {
+        "source": "ktypeid",
+        "target": "id"
+      },
+      "field_mappings": [
+        {"source": "ktypeid", "target": "id"},
+        {"source": "kfullname", "target": "name"},
+        {"source": "address", "target": "address"},
+        {"source": "person", "target": "manager"},
+        {"source": "tel", "target": "phone"},
+        {"source": "kcomment", "target": "remark"}
+      ],
+      "value_transforms": [
+        {"source": "deleted", "target": "is_active", "transform": "invert"}
+      ]
+    },
+    {
+      "source_table": "Unit",
+      "target_table": "units",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "description": "单位",
+      "primary_key": {
+        "source": "UnitID",
+        "target": "id"
+      },
+      "field_mappings": [
+        {"source": "UnitID", "target": "id"},
+        {"source": "UnitName", "target": "name"},
+        {"source": "UnitNamepy", "target": "name_py"}
+      ],
+      "value_transforms": []
+    },
+    {
+      "source_table": "Dlyndx",
+      "target_table": "sales_orders",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "description": "销售单头",
+      "primary_key": {
+        "source": "Vchcode",
+        "target": null
+      },
+      "field_mappings": [
+        {"source": "Vchcode", "target": "order_no"},
+        {"source": "Number", "target": "order_no"},
+        {"source": "Date", "target": "order_date"},
+        {"source": "Total", "target": "total_amount"},
+        {"source": "Comment", "target": "remark"},
+        {"source": "billstate", "target": "status"},
+        {"source": "Savedate", "target": "created_at"}
+      ],
+      "value_transforms": [],
+      "notes": "Vchcode 为内部关联键，不直接映射到 id；Number 映射为 order_no"
+    },
+    {
+      "source_table": "DlySale",
+      "target_table": "sales_items",
+      "source_db": "sqlite",
+      "target_db": "firebird",
+      "description": "销售明细",
+      "primary_key": {
+        "source": "DlyOrder",
+        "target": "id"
+      },
+      "field_mappings": [
+        {"source": "DlyOrder", "target": "id"},
+        {"source": "Vchcode", "target": "order_no"},
+        {"source": "PtypeId", "target": "product_id"},
+        {"source": "Qty", "target": "qty"},
+        {"source": "price", "target": "price"},
+        {"source": "total", "target": "amount"},
+        {"source": "comment", "target": "remark"}
+      ],
+      "value_transforms": [],
+      "notes": "PtypeId 关联 products 表"
+    }
+  ]
+}

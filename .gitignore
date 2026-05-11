@@ -2,35 +2,29 @@
 build/
 Build/
 out/
-Out/
 cmake-build-*/
 
 # Visual Studio
 .vs/
 *.sln
-*.vcxproj
-*.vcxproj.filters
-*.vcxproj.user
+*.vcxproj*
 *.suo
 *.user
-*.userosscache
-*.sdf
-*.opensdf
-*.VC.db
-*.VC.opendb
-ipch/
+*.pdb
+*.ilk
+*.obj
 
 # Compiled files
 *.exe
 *.dll
 *.lib
-*.obj
-*.pdb
-*.ilk
 *.exp
 *.idb
-*.tlog
-*.lastbuildstate
+
+# Third-party binaries (keep headers)
+third_party/*/lib/*.lib
+third_party/*/lib/*.obj
+third_party/*/lib/*.a
 
 # Logs
 logs/
@@ -39,26 +33,8 @@ logs/
 # Database files
 *.db
 *.fdb
-*.gdb
-*.lck
-
-# Configuration (保留示例配置)
-config/dbsync.conf
-!config/dbsync.conf.example
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# Temporary files
-temp/
-tmp/
-*.tmp

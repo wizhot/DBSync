@@ -1,237 +1,171 @@
+/**
+ * @file DbSyncApp.cpp
+ * @brief 数据库同步应用程序主类实现
+ * @details 实现应用程序的初始化、数据库连接、主循环等功能。
+ *          支持 SQLite (grasp.db) <-> Firebird (SALES.FDB) 异构数据库同步。
+ */
+
 #include "DbSyncApp.h"
-#include "Logger.h"
+#include "SyncManager.h"
 #include "ConfigManager.h"
-#include <shellapi.h>
+#include "MappingManager.h"
+#include "Logger.h"
+#include <iostream>
 
 namespace dbsync {
 
-DbSyncApp* DbSyncApp::instance_ = nullptr;
+// ==================== 构造与析构 ====================
 
 DbSyncApp::DbSyncApp()
-    : hInstance_(nullptr)
-    , minimizedStart_(false)
-    , autoStart_(false)
-    , showConsole_(false)
-    , running_(false) {
-    instance_ = this;
+    : initialized_(false)
+{
 }
 
-DbSyncApp::~DbSyncApp() {
+DbSyncApp::~DbSyncApp()
+{
     Shutdown();
-    instance_ = nullptr;
 }
 
-bool DbSyncApp::Initialize(HINSTANCE hInstance, int nCmdShow, LPWSTR lpCmdLine) {
-    hInstance_ = hInstance;
-    
-    // 解析命令行参数
-    ParseCommandLine(lpCmdLine);
-    
-    // 初始化日志
-    if (!InitializeLogging()) {
-        MessageBoxW(nullptr, L"Failed to initialize logging", L"Error", MB_OK | MB_ICONERROR);
-        return false;
+// ==================== 初始化 ====================
+
+bool DbSyncApp::Initialize()
+{
+    std::cout << "[DbSyncApp] 正在初始化 DbSync 应用程序..." << std::endl;
+
+    // 1. 初始化日志系统
+    if (!InitializeLogger()) {
+        std::cerr << "[DbSyncApp] 日志系统初始化失败" << std::endl;
+        // 日志失败不阻塞应用启动
     }
-    
-    LOG_INFO("DbSync v" + std::string(VERSION) + " starting...");
-    LOG_INFO("Command line: " + Utils::WideToUtf8(lpCmdLine ? lpCmdLine : L""));
-    
-    // 初始化配置
-    if (!InitializeConfiguration()) {
-        LOG_ERROR("Failed to initialize configuration");
-        return false;
-    }
-    
-    // 初始化数据库和同步管理器
+
+    // 2. 初始化数据库连接（加载映射配置、连接数据库）
     if (!InitializeDatabase()) {
-        LOG_ERROR("Failed to initialize database");
+        std::cerr << "[DbSyncApp] 数据库初始化失败" << std::endl;
         return false;
     }
-    
-    // 初始化网络
-    if (!InitializeNetwork()) {
-        LOG_ERROR("Failed to initialize network");
-        return false;
-    }
-    
-    // 初始化UI
-    if (!InitializeUI(nCmdShow)) {
-        LOG_ERROR("Failed to initialize UI");
-        return false;
-    }
-    
-    // 设置控制台控制处理程序
-    SetConsoleCtrlHandler(ConsoleHandler, TRUE);
-    
-    // 如果配置了开机自启，设置注册表
-    if (ConfigManager::GetInstance().GetSyncConfig().startWithWindows) {
-        SetupAutoStart();
-    }
-    
-    running_ = true;
-    LOG_INFO("DbSync initialized successfully");
-    
-    // 如果配置了自动启动同步，开始同步
-    if (ConfigManager::GetInstance().GetSyncConfig().autoStart) {
-        LOG_INFO("Auto-starting synchronization...");
-        syncManager_->StartSync();
-    }
-    
+
+    initialized_ = true;
+    std::cout << "[DbSyncApp] 应用程序初始化完成" << std::endl;
     return true;
 }
 
-int DbSyncApp::Run() {
-    if (!running_) {
-        return 1;
+// ==================== 数据库初始化 ====================
+
+bool DbSyncApp::InitializeDatabase()
+{
+    std::cout << "[DbSyncApp] 正在初始化数据库..." << std::endl;
+
+    // 1. 加载配置文件
+    auto& configMgr = ConfigManager::GetInstance();
+    if (!configMgr.LoadConfig()) {
+        std::cerr << "[DbSyncApp] 加载配置文件失败，使用默认配置" << std::endl;
     }
-    
-    // 运行消息循环
-    return mainWindow_.Run();
+
+    // 获取数据库配置
+    auto localConfig = configMgr.GetLocalDbConfig();
+    auto remoteConfig = configMgr.GetRemoteDbConfig();
+    auto syncConfig = configMgr.GetSyncConfig();
+
+    // 2. 在日志中显示数据库类型信息
+    std::cout << "[DbSyncApp] 本地数据库: " << localConfig.database
+              << " (类型: " << localConfig.dbType << ")" << std::endl;
+    std::cout << "[DbSyncApp] 远程数据库: " << remoteConfig.database
+              << " (类型: " << remoteConfig.dbType << ")" << std::endl;
+    std::cout << "[DbSyncApp] 同步模式: SQLite (" << localConfig.database
+              << ") <-> Firebird (" << remoteConfig.database << ")" << std::endl;
+
+    // 3. 加载映射配置文件
+    auto& mappingMgr = MappingManager::GetInstance();
+    if (!mappingMgr.LoadMapping(syncConfig.mappingFile)) {
+        std::cerr << "[DbSyncApp] 加载映射配置文件失败: "
+                  << syncConfig.mappingFile << std::endl;
+        return false;
+    }
+
+    const auto& mappings = mappingMgr.GetTableMappings();
+    std::cout << "[DbSyncApp] 映射配置加载成功，共 " << mappings.size()
+              << " 条表映射规则" << std::endl;
+
+    // 打印映射表列表
+    for (const auto& m : mappings) {
+        std::cout << "  - " << m.sourceTable << " (" << m.sourceDb << ") -> "
+                  << m.targetTable << " (" << m.targetDb << ")" << std::endl;
+    }
+
+    // 4. 创建并初始化同步管理器
+    syncManager_ = std::make_unique<SyncManager>();
+    if (!syncManager_->Initialize()) {
+        std::cerr << "[DbSyncApp] 同步管理器初始化失败" << std::endl;
+        return false;
+    }
+
+    std::cout << "[DbSyncApp] 数据库初始化完成" << std::endl;
+    return true;
 }
 
-void DbSyncApp::Shutdown() {
-    if (!running_) {
+// ==================== 日志初始化 ====================
+
+bool DbSyncApp::InitializeLogger()
+{
+    // TODO: 实现日志系统初始化
+    // logger_ = std::make_unique<Logger>();
+    // if (!logger_->Initialize("config/logging.conf")) {
+    //     return false;
+    // }
+    return true;
+}
+
+// ==================== 运行 ====================
+
+int DbSyncApp::Run()
+{
+    if (!initialized_) {
+        std::cerr << "[DbSyncApp] 应用程序未初始化，请先调用 Initialize()" << std::endl;
+        return -1;
+    }
+
+    std::cout << "[DbSyncApp] DbSync 正在运行..." << std::endl;
+
+    // 启动自动同步
+    if (syncManager_) {
+        auto& configMgr = ConfigManager::GetInstance();
+        if (configMgr.GetSyncConfig().autoStart) {
+            syncManager_->StartSync();
+        }
+    }
+
+    // 主循环
+    // TODO: 集成 GUI 事件循环或控制台命令处理
+    // 当前为简单实现，按回车退出
+    std::cout << "[DbSyncApp] 按 Enter 键退出..." << std::endl;
+    std::cin.get();
+
+    return 0;
+}
+
+// ==================== 关闭 ====================
+
+void DbSyncApp::Shutdown()
+{
+    if (!initialized_) {
         return;
     }
-    
-    LOG_INFO("Shutting down DbSync...");
-    
+
+    std::cout << "[DbSyncApp] 正在关闭应用程序..." << std::endl;
+
     // 停止同步
     if (syncManager_) {
         syncManager_->Shutdown();
         syncManager_.reset();
     }
-    
-    // 关闭UI
-    mainWindow_.Destroy();
-    
-    // 保存配置
-    ConfigManager::GetInstance().SaveConfig("config/dbsync.conf");
-    
-    running_ = false;
-    LOG_INFO("DbSync shutdown complete");
-    
+
     // 关闭日志
-    // Logger::GetInstance().Shutdown();
-}
+    if (logger_) {
+        logger_.reset();
+    }
 
-bool DbSyncApp::InitializeLogging() {
-    // 创建日志目录
-    CreateDirectoryW(L"logs", nullptr);
-    
-    // 初始化日志系统
-    Logger::GetInstance().Initialize("logs/dbsync.log");
-    Logger::GetInstance().SetLogLevel(LogLevel::DEBUG);
-    
-    return true;
-}
-
-bool DbSyncApp::InitializeConfiguration() {
-    // 创建配置目录
-    CreateDirectoryW(L"config", nullptr);
-    
-    // 加载配置
-    std::string configPath = "config/dbsync.conf";
-    if (!ConfigManager::GetInstance().LoadConfig(configPath)) {
-        // 如果配置文件不存在，创建默认配置
-        ConfigManager::GetInstance().SetDefaultConfig();
-        ConfigManager::GetInstance().SaveConfig(configPath);
-        LOG_INFO("Created default configuration file");
-    }
-    
-    return true;
-}
-
-bool DbSyncApp::InitializeDatabase() {
-    // 创建同步管理器
-    syncManager_ = std::make_unique<SyncManager>();
-    
-    // 初始化同步管理器
-    if (!syncManager_->Initialize()) {
-        LOG_ERROR("Failed to initialize sync manager");
-        return false;
-    }
-    
-    // 设置回调
-    syncManager_->SetSyncStatusCallback([this](const std::string& status, int progress) {
-        mainWindow_.UpdateStatus(status);
-        mainWindow_.UpdateProgress(progress);
-    });
-    
-    syncManager_->SetErrorCallback([this](const std::string& error) {
-        LOG_ERROR("Sync error: " + error);
-        mainWindow_.ShowError(error);
-    });
-    
-    return true;
-}
-
-bool DbSyncApp::InitializeNetwork() {
-    // 网络已在SyncManager中初始化
-    return true;
-}
-
-bool DbSyncApp::InitializeUI(int nCmdShow) {
-    // 初始化通用控件
-    INITCOMMONCONTROLSEX iccex;
-    iccex.dwSize = sizeof(iccex);
-    iccex.dwICC = ICC_PROGRESS_CLASS | ICC_BAR_CLASSES;
-    InitCommonControlsEx(&iccex);
-    
-    // 创建主窗口
-    int showCmd = minimizedStart_ ? SW_HIDE : nCmdShow;
-    if (!mainWindow_.Create(hInstance_, showCmd)) {
-        LOG_ERROR("Failed to create main window");
-        return false;
-    }
-    
-    // 设置同步管理器
-    mainWindow_.SetSyncManager(syncManager_.get());
-    
-    // 如果是最小化启动，隐藏到托盘
-    if (minimizedStart_) {
-        mainWindow_.Minimize();
-    }
-    
-    return true;
-}
-
-void DbSyncApp::ParseCommandLine(LPWSTR lpCmdLine) {
-    if (!lpCmdLine) {
-        return;
-    }
-    
-    std::wstring cmdLine = lpCmdLine;
-    
-    // 检查参数
-    if (cmdLine.find(L"-minimized") != std::wstring::npos ||
-        cmdLine.find(L"/minimized") != std::wstring::npos) {
-        minimizedStart_ = true;
-    }
-    
-    if (cmdLine.find(L"-autostart") != std::wstring::npos ||
-        cmdLine.find(L"/autostart") != std::wstring::npos) {
-        autoStart_ = true;
-    }
-    
-    if (cmdLine.find(L"-console") != std::wstring::npos ||
-        cmdLine.find(L"/console") != std::wstring::npos) {
-        showConsole_ = true;
-    }
-}
-
-bool DbSyncApp::SetupAutoStart() {
-    return SystemTray::SetAutoStart(true);
-}
-
-BOOL WINAPI DbSyncApp::ConsoleHandler(DWORD signal) {
-    if (signal == CTRL_C_EVENT || signal == CTRL_BREAK_EVENT || signal == CTRL_CLOSE_EVENT) {
-        if (instance_) {
-            instance_->Shutdown();
-        }
-        return TRUE;
-    }
-    return FALSE;
+    initialized_ = false;
+    std::cout << "[DbSyncApp] 应用程序已关闭" << std::endl;
 }
 
 } // namespace dbsync
