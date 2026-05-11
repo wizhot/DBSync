@@ -361,7 +361,7 @@ void NetworkManager::HeartbeatThreadFunc() {
         SyncMessage heartbeat;
         heartbeat.messageType = 2; // heartbeat
         heartbeat.sourceNode = ConfigManager::GetInstance().GetNodeId();
-        heartbeat.timestamp = Utils::GetCurrentTimestamp();
+        heartbeat.timestamp = GetCurrentTimestamp();
         
         if (clientConnected_) {
             SendMessage(heartbeat);

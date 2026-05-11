@@ -1,11 +1,12 @@
-﻿#pragma once
+#pragma once
 
 #include "Common.h"
-#include "FirebirdManager.h"
+
+struct sqlite3;
 
 namespace dbsync {
 
-// 变更追踪器 - 使用LiteSQL存储本地变更历史
+// 变更追踪器 - 使用SQLite存储本地变更历史
 class ChangeTracker {
 public:
     ChangeTracker();
@@ -42,7 +43,11 @@ private:
     // 数据库表结构定义
     bool CreateSchema();
     
-    std::unique_ptr<litesql::Database> db_;
+    // 内部查询辅助
+    bool ExecuteSQL(const std::string& sql);
+    bool QuerySQL(const std::string& sql, std::vector<std::vector<std::string>>& results);
+    
+    sqlite3* db_;
     std::string dbPath_;
     bool initialized_;
     std::mutex mutex_;

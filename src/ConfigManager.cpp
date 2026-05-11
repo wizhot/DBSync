@@ -70,6 +70,8 @@ void ConfigManager::InitDefaults()
     networkConfig_.remoteIp = "192.168.1.100";
     networkConfig_.remotePort = 15555;
     networkConfig_.connectionTimeoutMs = 5000;
+    networkConfig_.heartbeatIntervalMs = 5000;
+    networkConfig_.maxRetryCount = 3;
     networkConfig_.retryIntervalMs = 3000;
 
     // 同步配置
@@ -81,6 +83,7 @@ void ConfigManager::InitDefaults()
     syncConfig_.resolveConflictsAutomatically = true;
     syncConfig_.conflictResolutionStrategy = "timestamp";
     syncConfig_.mappingFile = "config/mapping.json";
+    syncConfig_.enableNetworkSync = false;
 }
 
 // ==================== 数据库类型自动检测 ====================

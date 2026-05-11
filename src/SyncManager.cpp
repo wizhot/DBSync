@@ -1190,8 +1190,8 @@ std::string SyncManager::SerializeChangeRecord(const ChangeRecord& record)
 
 bool SyncManager::DeserializeChangeRecord(const std::string& data, ChangeRecord& record)
 {
-    // 按 | 分割反序列化，使用 SqliteManager::ChangeRecord 的字段名格式
-    // 字段映射: change_id | table_name | operation | primary_key | change_time | new_data | old_data
+    // 按 | 分割反序列化
+    // 字段映射: id | tableName | changeType | primaryKeyValue | timestamp | data | (empty)
     std::vector<std::string> parts;
     std::stringstream ss(data);
     std::string part;
@@ -1205,16 +1205,15 @@ bool SyncManager::DeserializeChangeRecord(const std::string& data, ChangeRecord&
     }
 
     try {
-        // 使用 SqliteManager.h 中 ChangeRecord 的字段名
-        record.change_id = std::stoll(parts[0]);
-        record.table_name = parts[1];
-        record.operation = parts[2];  // "INSERT" / "UPDATE" / "DELETE"
-        record.primary_key = parts[3];
-        record.change_time = parts[4];
-        record.new_data = parts[5];
-        if (parts.size() > 6) {
-            record.old_data = parts[6];
-        }
+        record.id = parts[0];
+        record.tableName = parts[1];
+        std::string op = parts[2];  // "INSERT" / "UPDATE" / "DELETE"
+        if (op == "INSERT") record.changeType = ChangeType::INSERT;
+        else if (op == "UPDATE") record.changeType = ChangeType::UPDATE;
+        else if (op == "DELETE") record.changeType = ChangeType::DELETE;
+        record.primaryKeyValue = parts[3];
+        record.timestamp = parts[4];
+        record.data = parts[5];
         return true;
     } catch (...) {
         return false;

@@ -38,7 +38,47 @@
 
 namespace dbsync {
 
-// ==================== 工具函数 ====================
+// ==================== 版本号 ====================
+
+#ifndef VERSION
+#define VERSION "1.0.0"
+#endif
+
+// ==================== 工具函数命名空间 ====================
+
+namespace Utils {
+
+/**
+ * @brief 将 UTF-8 字符串转换为宽字符串
+ * @param utf8 UTF-8 编码的字符串
+ * @return 宽字符串
+ */
+inline std::wstring Utf8ToWide(const std::string& utf8) {
+    if (utf8.empty()) return L"";
+    int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, nullptr, 0);
+    if (len <= 0) return L"";
+    std::wstring wide(len - 1, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, &wide[0], len);
+    return wide;
+}
+
+/**
+ * @brief 将宽字符串转换为 UTF-8 字符串
+ * @param wide 宽字符串
+ * @return UTF-8 编码的字符串
+ */
+inline std::string WideToUtf8(const std::wstring& wide) {
+    if (wide.empty()) return "";
+    int len = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (len <= 0) return "";
+    std::string utf8(len - 1, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, &utf8[0], len, nullptr, nullptr);
+    return utf8;
+}
+
+} // namespace Utils
+
+// ==================== 时间戳工具函数 ====================
 
 /**
  * @brief 获取当前时间戳（毫秒级）
@@ -94,7 +134,8 @@ enum class LogLevel {
     DEBUG,      ///< 调试信息
     INFO,       ///< 一般信息
     WARNING,    ///< 警告
-    ERROR       ///< 错误
+    ERROR,      ///< 错误
+    FATAL       ///< 致命错误
 };
 
 // ==================== 核心数据结构 ====================
@@ -135,11 +176,14 @@ struct NetworkConfig {
  * @details 描述同步行为的全局配置
  */
 struct SyncConfig {
+    bool autoStart;                         ///< 是否自动开始同步
+    bool minimizeToTray;                    ///< 是否最小化到系统托盘
+    bool startWithWindows;                  ///< 是否开机自启
     int syncIntervalMs;                     ///< 同步间隔（毫秒）
+    int maxRetries;                         ///< 最大重试次数
     std::string mappingFile;                ///< 映射配置文件路径
     std::string conflictResolutionStrategy; ///< 冲突解决策略: "timestamp", "source_wins", "target_wins"
     bool resolveConflictsAutomatically;     ///< 是否自动解决冲突
-    int maxSyncRetryCount;                  ///< 最大同步重试次数
     bool enableNetworkSync;                 ///< 是否启用网络同步
 };
 

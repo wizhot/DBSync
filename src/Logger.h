@@ -1,16 +1,9 @@
 ﻿#pragma once
 
 #include "Common.h"
+#include <fstream>
 
 namespace dbsync {
-
-enum class LogLevel {
-    DEBUG,
-    INFO,
-    WARNING,
-    ERROR,
-    FATAL
-};
 
 class Logger {
 public:
@@ -50,10 +43,20 @@ private:
 };
 
 // 宏定义方便使用
+#ifndef LOG_DEBUG
 #define LOG_DEBUG(msg) dbsync::Logger::GetInstance().Debug(msg)
+#endif
+#ifndef LOG_INFO
 #define LOG_INFO(msg) dbsync::Logger::GetInstance().Info(msg)
+#endif
+#ifndef LOG_WARNING
 #define LOG_WARNING(msg) dbsync::Logger::GetInstance().Warning(msg)
+#endif
+#ifndef LOG_ERROR
 #define LOG_ERROR(msg) dbsync::Logger::GetInstance().Error(msg)
+#endif
+#ifndef LOG_FATAL
 #define LOG_FATAL(msg) dbsync::Logger::GetInstance().Fatal(msg)
+#endif
 
 } // namespace dbsync

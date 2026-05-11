@@ -12,54 +12,9 @@
 
 #pragma once
 
-#include <string>
-#include <mutex>
+#include "Common.h"
 
 namespace dbsync {
-
-/**
- * @brief 数据库连接配置
- * @details 描述一个数据库的连接参数，同时支持 SQLite 和 Firebird
- */
-struct DatabaseConfig {
-    std::string host;           ///< 主机地址（Firebird 远程连接时使用）
-    int port;                   ///< 端口号（Firebird 远程连接时使用，默认 3050）
-    std::string database;       ///< 数据库文件路径
-    std::string username;       ///< 用户名（Firebird 使用）
-    std::string password;       ///< 密码（Firebird 使用）
-    std::string charset;        ///< 字符集编码（默认 UTF8）
-    bool embedded;              ///< 是否使用嵌入式模式（Firebird Embedded）
-    std::string dbType;         ///< 数据库类型: "auto", "sqlite", "firebird"
-    std::string encryptionKey;  ///< SQLite 数据库加密密钥（空字符串表示不加密）
-};
-
-/**
- * @brief 网络通信配置
- * @details 描述节点间的网络通信参数
- */
-struct NetworkConfig {
-    std::string localIp;            ///< 本地监听 IP 地址
-    int localPort;                  ///< 本地监听端口
-    std::string remoteIp;           ///< 远程节点 IP 地址
-    int remotePort;                 ///< 远程节点端口
-    int connectionTimeoutMs;        ///< 连接超时时间（毫秒）
-    int retryIntervalMs;            ///< 重连间隔时间（毫秒）
-};
-
-/**
- * @brief 同步策略配置
- * @details 描述数据同步的行为参数
- */
-struct SyncConfig {
-    bool autoStart;                         ///< 是否自动开始同步
-    bool minimizeToTray;                    ///< 是否最小化到系统托盘
-    bool startWithWindows;                  ///< 是否开机自启
-    int syncIntervalMs;                     ///< 同步间隔时间（毫秒）
-    int maxRetries;                         ///< 最大重试次数
-    bool resolveConflictsAutomatically;     ///< 是否自动解决冲突
-    std::string conflictResolutionStrategy; ///< 冲突解决策略: "timestamp", "source_wins", "target_wins"
-    std::string mappingFile;                ///< 映射规则文件路径
-};
 
 /**
  * @class ConfigManager

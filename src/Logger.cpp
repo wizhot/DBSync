@@ -50,7 +50,7 @@ void Logger::Log(LogLevel level, const std::string& message) {
     }
     
     // 写入日志
-    std::string logEntry = "[" + Utils::GetCurrentTimestamp() + "] " 
+    std::string logEntry = "[" + GetCurrentTimestamp() + "] " 
                           + "[" + GetLogLevelString(level) + "] " 
                           + message + "\n";
     
