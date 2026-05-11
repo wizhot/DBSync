@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SqliteManager.cpp
  * @brief SQLite 数据库管理器实现文件
  * @details 实现对加密 SQLite 数据库的完整操作，包括连接管理、数据查询、

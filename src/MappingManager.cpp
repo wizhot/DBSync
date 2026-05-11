@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file MappingManager.cpp
  * @brief 映射管理器实现
  * @details 实现映射配置的加载、查询、字段映射和值转换功能。

@@ -1,4 +1,4 @@
-#include "ChangeTracker.h"
+﻿#include "ChangeTracker.h"
 #include "Logger.h"
 
 namespace dbsync {

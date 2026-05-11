@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SyncManager.cpp
  * @brief 同步管理器实现
  * @details 实现 SQLite <-> Firebird 异构数据库的双向数据同步。

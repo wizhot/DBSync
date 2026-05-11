@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file DbSyncApp.h
  * @brief 数据库同步应用程序主类头文件
  * @details DbSyncApp 是整个同步工具的应用层入口，负责：

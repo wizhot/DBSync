@@ -1,4 +1,4 @@
-#include "DbSyncApp.h"
+﻿#include "DbSyncApp.h"
 #include <windows.h>
 
 using namespace dbsync;

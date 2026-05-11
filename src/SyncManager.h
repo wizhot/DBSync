@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SyncManager.h
  * @brief 同步管理器头文件
  * @details 管理 SQLite ↔ Firebird 异构数据库之间的双向数据同步。

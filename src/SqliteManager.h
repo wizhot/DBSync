@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file SqliteManager.h
  * @brief SQLite 数据库管理器头文件
  * @details 支持加密 SQLite 数据库的连接、查询、变更追踪等功能

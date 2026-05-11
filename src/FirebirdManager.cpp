@@ -1,4 +1,4 @@
-#include "FirebirdManager.h"
+﻿#include "FirebirdManager.h"
 #include "Logger.h"
 #include <cstring>
 

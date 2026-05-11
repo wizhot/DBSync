@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ConfigManager.cpp
  * @brief 配置管理器实现
  * @details 实现 INI 格式配置文件的加载和保存，支持：

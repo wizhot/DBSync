@@ -1,4 +1,4 @@
-#include "SystemTray.h"
+﻿#include "SystemTray.h"
 #include "SyncManager.h"
 #include "Logger.h"
 #include "ConfigManager.h"

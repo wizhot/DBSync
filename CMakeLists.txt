@@ -13,6 +13,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 # Unicode 支持
 add_definitions(-DUNICODE -D_UNICODE)
 
+# MSVC UTF-8 编译选项
+if(MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 # 源文件
 set(SOURCES
     src/main.cpp
@@ -48,6 +53,7 @@ set(HEADERS
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
 # 第三方库路径
+# 优先使用 cross_deps（如果存在），否则使用 third_party 本地路径
 if(EXISTS /workspace/cross_deps)
     include_directories(/workspace/cross_deps/sqlite3/include)
     include_directories(/workspace/cross_deps/jsoncpp/include)
@@ -56,6 +62,11 @@ if(EXISTS /workspace/cross_deps)
     link_directories(/workspace/cross_deps/jsoncpp/lib)
     link_directories(/workspace/cross_deps/firebird/lib)
 endif()
+
+# 本地 third_party 头文件路径（始终包含，作为备用）
+include_directories(${CMAKE_SOURCE_DIR}/third_party/sqlite3/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include)
+include_directories(${CMAKE_SOURCE_DIR}/third_party/firebird/include)
 
 # 创建可执行文件
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})

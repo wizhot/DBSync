@@ -1,4 +1,4 @@
-#include "NetworkManager.h"
+﻿#include "NetworkManager.h"
 #include "Logger.h"
 #include "ConfigManager.h"
 #include <json/json.h>

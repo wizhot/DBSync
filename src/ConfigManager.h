@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file ConfigManager.h
  * @brief 配置管理器头文件
  * @details 管理数据库同步工具的所有配置信息，包括：

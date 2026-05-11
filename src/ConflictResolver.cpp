@@ -1,4 +1,4 @@
-#include "ConflictResolver.h"
+﻿#include "ConflictResolver.h"
 #include "Logger.h"
 #include <json/json.h>
 

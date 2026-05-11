@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file MappingManager.h
  * @brief 映射管理器头文件
  * @details 管理 SQLite 和 Firebird 之间的表字段映射规则，
