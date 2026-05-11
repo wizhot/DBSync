@@ -98,7 +98,6 @@ public:
   // Array operations
   Value& append(const Value& value);
   Value& append(Value&& value);
-  Value& operator[](const char* key);
   void removeIndex(ArrayIndex index, Value* removed = nullptr);
   void removeMember(const char* key);
   void removeMember(const String& key);

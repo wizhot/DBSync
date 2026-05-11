@@ -10,14 +10,9 @@
 #include <string>
 #include <stdexcept>
 
-// Library namespace
-#ifndef JSON_NAMESPACE
-#define JSON_NAMESPACE Json
-#endif
-
-namespace JSON_NAMESPACE {
-
 // JSON value types
+namespace Json {
+
 enum ValueType {
   nullValue = 0,
   intValue,
@@ -39,7 +34,7 @@ using LargestUInt = uint64_t;
 using ArrayIndex = unsigned int;
 
 // Exception types
-class JSON_API Exception : public std::exception {
+class Exception : public std::exception {
 public:
   Exception(String msg) : msg_(std::move(msg)) {}
   const char* what() const noexcept override { return msg_.c_str(); }
@@ -47,12 +42,12 @@ protected:
   String msg_;
 };
 
-class JSON_API RuntimeError : public Exception {
+class RuntimeError : public Exception {
 public:
   RuntimeError(String msg) : Exception(std::move(msg)) {}
 };
 
-class JSON_API LogicError : public Exception {
+class LogicError : public Exception {
 public:
   LogicError(String msg) : Exception(std::move(msg)) {}
 };

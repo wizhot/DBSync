@@ -85,21 +85,21 @@ private:
   String indentation_;
 };
 
-class JSON_API StreamWriter : public Writer {
+class JSON_API StreamWriter {
 public:
-  ~StreamWriter() override;
+  virtual ~StreamWriter();
   virtual int write(const Value& root, std::ostream* sout) = 0;
-  String write(const Value& root) override;
+  String write(const Value& root);
 };
 
-class JSON_API StreamWriterBuilder : public Writer {
+class JSON_API StreamWriterBuilder {
 public:
   StreamWriterBuilder();
-  ~StreamWriterBuilder() override;
+  ~StreamWriterBuilder();
 
   StreamWriter* newStreamWriter() const;
 
-  String write(const Value& root) override;
+  String write(const Value& root);
 
   /// Set a configuration setting.
   void set(const String& key, const String& value);
@@ -113,8 +113,10 @@ private:
   Json::Value settings_;
 };
 
+/// Convenience function: write string representation of Value
+String JSON_API writeString(StreamWriterBuilder const& builder, const Value& root);
+
 /// Write a Value in JSON format to a stream, without adding a newline.
-/// This is a convenience function.
 std::ostream& operator<<(std::ostream& sout, const Value& root);
 
 } // namespace Json

@@ -2,43 +2,21 @@
 #ifndef JSON_ASSERTIONS_H_INCLUDED
 #define JSON_ASSERTIONS_H_INCLUDED
 
-#include <cstdlib>
-#include <sstream>
+#include <cassert>
+#include <stdexcept>
 
-#ifndef JSON_ASSERT
-#define JSON_ASSERT(condition)                                                 \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      std::ostringstream oss;                                                  \
-      oss << "Assertion failed: " #condition " in " << __FILE__                \
-          << ":" << __LINE__;                                                  \
-      std::cerr << oss.str() << std::endl;                                    \
-      std::abort();                                                            \
-    }                                                                          \
-  } while (0)
-#endif
+namespace Json {
 
-#ifndef JSON_ASSERT_MESSAGE
-#define JSON_ASSERT_MESSAGE(condition, message)                                \
-  do {                                                                         \
-    if (!(condition)) {                                                        \
-      std::ostringstream oss;                                                  \
-      oss << "Assertion failed: " #condition " in " << __FILE__                \
-          << ":" << __LINE__ << " - " << message;                              \
-      std::cerr << oss.str() << std::endl;                                    \
-      std::abort();                                                            \
-    }                                                                          \
-  } while (0)
-#endif
+/// Assert macro
+#define JSON_ASSERT(condition) assert(condition)
 
-#ifndef JSON_FAIL_MESSAGE
-#define JSON_FAIL_MESSAGE(message)                                             \
-  do {                                                                         \
-    std::ostringstream oss;                                                    \
-    oss << message << " in " << __FILE__ << ":" << __LINE__;                   \
-    std::cerr << oss.str() << std::endl;                                      \
-    std::abort();                                                              \
-  } while (0)
-#endif
+/// Assert message macro
+#define JSON_ASSERT_MESSAGE(condition, message) \
+    do { if (!(condition)) throw std::runtime_error(message); } while(0)
+
+/// Fail macro
+#define JSON_FAIL_MESSAGE(message) throw std::runtime_error(message)
+
+} // namespace Json
 
 #endif // JSON_ASSERTIONS_H_INCLUDED

@@ -10,6 +10,36 @@
 
 namespace Json {
 
+// Error structure for structured error reporting
+struct StructError {
+  String message;
+  int line;
+  int column;
+};
+
+// Token type for internal parsing
+struct Token {
+  enum Kind {
+    tokenEndOfStream,
+    tokenObjectBegin,
+    tokenObjectEnd,
+    tokenArrayBegin,
+    tokenArrayEnd,
+    tokenString,
+    tokenNumber,
+    tokenTrue,
+    tokenFalse,
+    tokenNull,
+    tokenArraySeparator,
+    tokenMemberSeparator,
+    tokenComment,
+    tokenError
+  };
+  Kind kind;
+  const char* begin;
+  const char* end;
+};
+
 class JSON_API CharReader {
 public:
   virtual ~CharReader();
@@ -26,19 +56,7 @@ public:
 
 class JSON_API Reader {
 public:
-  enum Features {
-    none = 0,
-    allowComments = 1,
-    allowTrailingCommas = 2,
-    strictMode = 4,
-    allowSpecialFloats = 8,
-    allowSingleQuotes = 16,
-    allowBOM = 32,
-    allowNanAndInf = 64,
-    allowEscapedAny = 128
-  };
-
-  Reader(Features features = Features::none);
+  Reader();
   ~Reader();
 
   bool parse(const String& document, Value& root, bool collectComments = true);
@@ -52,7 +70,6 @@ public:
 private:
   bool readValue(Value& root);
   bool readToken(Token& token);
-  // ... (implementation details omitted for stub)
 };
 
 class JSON_API CharReaderBuilder {
@@ -81,14 +98,13 @@ public:
   bool allowSingleQuotes_;
   bool allowBOM_;
   bool allowNanAndInf_;
-  bool stackLimit_;
+  int stackLimit_;
   bool failIfExtra_;
   bool rejectDupKeys_;
   bool allowEscapedAny_;
 };
 
 /// Parse from an input stream.
-/// \deprecated Use CharReaderBuilder instead.
 bool JSON_API parseFromStream(CharReaderBuilder const& builder, std::istream& sin,
                               Value* root, String* errs);
 
